@@ -1,56 +1,47 @@
-const MongoClient = require('mongodb');
+const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+const { copyFileSync } = require('fs');
+const dboper = require('./operations');
 
-const url = 'mongodb://0.0.0.0:27017/';
+const url = 'mongodb+srv://pankaj:1234@cluster0.lcgmaf0.mongodb.net/test';
 const dbname = 'conFusion';
-const client = new MongoClient(url);
 
-// MongoClient.connect(url, (err, client) => {
+MongoClient.connect(url, (err, client) => {
 
-    // assert.equal(err,null);
-async function run() {
+    assert.equal(err,null);
 
-    try{
-        const db = client.db(dbname);
-        const collection = db.collection("dishes");
+    console.log('Connected correctly to server');
 
-        const result = await collection.insertOne(
-            {"name": "Uthappizza", "description": "test"}
-        );
-
-        console.log(`A document was inserted with the _id: ${result.insertedId}`);
-
-
-    } finally {
-        // client.close();
-    }
-}
-run().catch(console.dir);
-
-
-//     console.log('Connected correctly to server');
-
+    const db = client.db(dbname);
+    const collection = db.collection("dishes");
     
-    
-//     collection.insert(,
-//     (err, result) => {
-//         // assert.equal(err,null);
+    dboper.insertDocument(db, 
+                    {name: "momos", description: "test"}, 
+                    'dishes', 
+                    (result) => {
+        console.log("Insert Document: \n", result);
 
-//         console.log("After Insert:\n");
-//         console.log(result);
+        dboper.findDocument(db, "dishes", (docs) => {
+            console.log("Found Documents:\n", docs);
 
-//         collection.find({}).toArray((err, docs) => {
-//             // assert.equal(err,null);
-            
-//             console.log("Found:\n");
-//             console.log(docs);
+            dboper.updateDocument(db, 
+                                    {name: "momos"}, 
+                                    {description: "Updated test"}, 
+                                    "dishes", (result) => {
+                console.log("Updated Document:\n", result.result);
 
-//             db.dropCollection("dishes", (err, result) => {
-//                 // assert.equal(err,null);
+                dboper.findDocument(db, "dishes", (docs) => {
+                    console.log("Found Documents:\n", docs);
+                
+                    db.dropCollection("dishes", (result) => {
+                        console.log("Dropped Collection: ", result);
 
-//                 client.close();
-//             });
-//         });
-//     });
+                        client.close();
+                    })
+                });
+        
+            });
+        })
+    })
 
-// });
+});
